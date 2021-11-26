@@ -44,22 +44,16 @@ def convert_files(source: Path, delimiter: str = ","):
 
 
 def read_csv_file(source: Path, delimiter: str) -> tuple:
-    return_list = list()
-
     with open(source, "r") as file:
         rows = [row.split(delimiter) for row in file]
-        fields = rows[0]
-        data = rows[1:]
+        csv_data = dict.fromkeys(rows[0], [])
+        data_rows = rows[1:]
 
-        for count, values in enumerate(data):
-            aux = list()
+        for data in data_rows:
+            for i, field in enumerate(csv_data.keys()):
+                csv_data[field].append(data[i].strip)
 
-            for i, field in enumerate(fields):
-                aux.append((field.strip(), values[i].strip))
-
-            return_list.append(aux)
-
-    return return_list
+    return csv_data
 
 
 def is_float(value: str) -> bool:
@@ -89,15 +83,16 @@ def save_csv_file(jsons: list, file_name: str):
     logger.info("bla bla")
 
 
-def save_json_file(csv_list: list, file_name: str):
-    for cont, data in enumerate(csv_list):
+"""TODO: change csv_data to dict"""
+def save_json_file(csv_data: dict, file_name: str):
+    for field, datas in csv_data.items():
         new_file_name = output_path.joinpath(file_name.split(".")[0] + ".json")
         logger.info("Saving json file: %s", new_file_name)
 
         with open(new_file_name, "w") as file:
             file.write("[\n")
 
-            for rows in data:
+            for data in datas:
                 tab = "".ljust(4, " ")
                 begin = "{\n"
                 file.write(f"{tab}{begin}")
