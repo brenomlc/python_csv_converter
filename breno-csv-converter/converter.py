@@ -86,42 +86,50 @@ def save_csv_file(jsons: list, file_name: str):
 
 
 def save_json_file(csv_data_dict: dict, file_name: str):
-    for field, csv_data in csv_data_dict.items():
-        new_file_name = output_path.joinpath(file_name.split(".")[0] + ".json")
-        logger.info("Saving json file: %s", new_file_name)
+    new_file_name = output_path.joinpath(file_name.split(".")[0] + ".json")
+    logger.info("Saving json file: %s", new_file_name)
+    
+    logger.info("CSV DATA TO CONVERT %s", csv_data_dict.values())
+    
+    with open(new_file_name, "w") as file:
+        tab = "".ljust(4, " ")
+        begin = "{\n"
+        array_begin = "[\n"
+        file.write(f"{begin}")
+        file.write(f"{tab}{array_begin}")
 
-        with open(new_file_name, "w") as file:
-            file.write("[\n")
+        csv_data = list(csv_data_dict.values())
+        objects_count = len(csv_data[0])
+        object_index = 0
+        while objects_count > 0:
+            file.write(f"{tab}{tab}{begin}")
+            for i, field in enumerate(csv_data_dict.keys()):
+                file.write(format_json((field, csv_data[i][object_index]), (csv_data[i][object_index] != csv_data[i][-1])))
 
-            for data in csv_data:
-                tab = "".ljust(4, " ")
-                begin = "{\n"
-                file.write(f"{tab}{begin}")
+            if objects_count > 1:
+                end = "},\n"
+            else:
+                end = "}\n"
 
-                for row in data:
-                    file.write(format_json(row, (row != data[-1])))
+            file.write(f"{tab}{tab}{end}")
+            object_index += 1
+            objects_count -= 1
 
-                if data != csv_data[-1]:
-                    end = "},\n"
-                else:
-                    end = "}\n"
-
-                file.write(f"{tab}{end}")
-
-            file.write("]")
+        file.write(f"{tab}]\n")
+        file.write("}")
 
 
 def format_json(row: tuple, has_comma: bool) -> str:
-    name, value = row
+    field, value = row
 
-    tab = "".ljust(8, " ")
+    tab = "".ljust(12, " ")
     end_line = "," if has_comma else ""
 
     if not value:
-        return f'{tab}"{name}": null{end_line}\n'
+        return f'{tab}"{field}": null{end_line}\n'
     elif is_int(value):
-        return f'{tab}"{name}": {int(value)}{end_line}\n'
+        return f'{tab}"{field}": {int(value)}{end_line}\n'
     elif is_float(value):
-        return f'{tab}"{name}": {float(value)}{end_line}\n'
+        return f'{tab}"{field}": {float(value)}{end_line}\n'
 
-    return f'{tab}"{name}": "{value}"{end_line}\n'
+    return f'{tab}"{field}": "{value}"{end_line}\n'
