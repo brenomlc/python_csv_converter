@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Convert csv to json and vice versa."
 authors = ["Breno M L Costa <brenomlomasso@gmail.com>"]
 readme = "README.md"
+packages = [{include = "breno-csv-converter"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
