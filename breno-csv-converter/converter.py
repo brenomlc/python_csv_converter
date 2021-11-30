@@ -39,7 +39,7 @@ def convert_files(source: Path, delimiter: str = ","):
 
         if file.suffix == ".json":
             data = read_json_file(file)
-            save_csv_file(data, file.name)
+            save_csv_file(data, file.name, delimiter)
         elif file.suffix == ".csv":
             data = read_csv_file(file, delimiter)
             save_json_file(data, file.name)
@@ -56,6 +56,26 @@ def read_csv_file(file: Path, delimiter: str) -> tuple:
                 csv_data[field].append(data[i].strip())
 
     return csv_data
+
+
+def read_json_file(file: Path) -> dict:
+    with open(file, "r") as file:
+        rows = [row.strip().rstrip('\n}[],').split("{") for row in file]
+        json_data = dict()
+
+        for row in rows:
+            if row[0] == '':
+                continue
+            field, value = row[0].split(":")
+            field = field.replace("'", "").replace('"', "")
+            value = value.strip().replace("'", "").replace('"', "")
+
+            if not json_data.get(field):
+                json_data[field] = [value]
+            else:
+                json_data[field].append(value)
+    
+    return json_data
 
 
 def is_float(value: str) -> bool:
@@ -77,19 +97,40 @@ def is_int(value: str) -> bool:
         return a == b
 
 
-def read_json_file(source: Path) -> tuple:
-    logger.info("bla bla")
+def save_csv_file(json_data_dict: dict, file_name: str, delimiter: str):
+    new_file_name = output_path.joinpath(file_name.split(".")[0] + ".csv")
+    logger.info("Saving csv file: %s", new_file_name)
 
+    with open(new_file_name, "w") as file:
+        fields_row = ""
+        
+        for i, field in enumerate(json_data_dict.keys()):
+            if i == 0:
+                fields_row += field
+            else:
+                fields_row += delimiter + field
+        file.write(fields_row+'\n')
 
-def save_csv_file(jsons: list, file_name: str):
-    logger.info("bla bla")
+        json_data = list(json_data_dict.values())
+        objects_count = len(json_data[0])
+        object_index = 0
+        while objects_count > object_index:
+            object_row = ''
+            for i in range(objects_count):
+                if i == 0:
+                    object_row += json_data[i][object_index]
+                else:
+                    object_row += delimiter + json_data[i][object_index]
+            file.write(object_row+'\n')
+            object_index += 1
+
+        
+
 
 
 def save_json_file(csv_data_dict: dict, file_name: str):
     new_file_name = output_path.joinpath(file_name.split(".")[0] + ".json")
     logger.info("Saving json file: %s", new_file_name)
-    
-    logger.info("CSV DATA TO CONVERT %s", csv_data_dict.values())
     
     with open(new_file_name, "w") as file:
         tab = "".ljust(4, " ")
